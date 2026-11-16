@@ -2,6 +2,7 @@
 @using DataEntities
 @using Store.Services
 @inject IConfiguration Configuration
+@inject ProductService ProductService
 @rendermode InteractiveServer
 @attribute [StreamRendering(true)]
 
@@ -13,13 +14,33 @@
 
 @if (products == null)
 {
-    <p><em>Loading...</em></p>
+    <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+}
+else if (products.Count == 0)
+{
+    <p>No products are available.</p>
 }
 else
 {
-    <!--Implement Products table here-->
-    <p>Under construction...</p>
-
+    <ul class="products-grid">
+        @foreach (var product in products)
+        {
+            <li class="product-card" @key="product.Id">
+                <div class="product-image">
+                    <img src="@(imagePrefix + product.ImageUrl)" alt="@product.Name" loading="lazy" />
+                </div>
+                <div class="product-details">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <h2 class="h6 mb-0">@product.Name</h2>
+                        <p class="text-nowrap mb-0">@product.Price.ToString("C")</p>
+                    </div>
+                    <p class="small text-muted mt-2 mb-0">@product.Description</p>
+                </div>
+            </li>
+        }
+    </ul>
 }
 
 @code {
@@ -28,10 +49,9 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Simulate asynchronous loading to demonstrate streaming rendering
-        await Task.Delay(500);
-        imagePrefix = Configuration["ImagePrefix"]!;
-        products = [];
+        imagePrefix = Configuration["ImagePrefix"]
+            ?? throw new InvalidOperationException("ImagePrefix is not set");
+        products = await ProductService.GetProducts();
     }
 
 }
